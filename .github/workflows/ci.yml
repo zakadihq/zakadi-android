@@ -1,7 +1,11 @@
 # Zakadi repository standard: ci.yml for a Kotlin Android repository (Gradle).
 # The commands are the ones in lefthook.yml. Spotless runs ktfmt, Android lint covers both
 # modules, and the integration job runs the instrumented tests of :zakadi-core on an
-# emulator at the minSdk, API 26 (spec 05 5.15).
+# emulator at the minSdk, API 26 (spec 05 5.15). The lint job ends with the scan (CI only,
+# references/GITHUB.md): licensee fails the build on a licence its allow list does not
+# name and reports every artifact both modules ship, the report is checked against the
+# excluded list of spec 00 0.10, and osv-scanner reads the same artifacts as Maven
+# packages.
 name: ci
 
 on:
@@ -38,6 +42,28 @@ jobs:
           java-version: 17
       - uses: gradle/actions/setup-gradle@v6
       - run: ./gradlew --no-daemon lint
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+          cache-dependency-path: .github/workflows/ci.yml
+      - name: scan
+        shell: bash
+        env:
+          EXCLUDED_LICENCES: '(^|[^[:alnum:]])(A?GPL|SSPL|RSAL)|GNU (Affero )?General Public|Server Side Public|Redis Source Available|-NC([^[:alnum:]]|$)|[Nn]on[- ]?[Cc]ommercial|FoxIO'
+        run: |
+          ./gradlew --no-daemon licensee
+          find . -path '*/build/reports/licensee/*' -name validation.txt -exec cat {} + | tee "$RUNNER_TEMP/licences.txt"
+          if grep -E "$EXCLUDED_LICENCES" "$RUNNER_TEMP/licences.txt"; then
+            echo "scan: a licence excluded by spec 00 0.10 is listed above" >&2
+            exit 1
+          fi
+          find . -path '*/build/reports/licensee/*' -name artifacts.json -exec cat {} + \
+            | jq -s '{results: [{source: {path: "licensee", type: "lockfile"}, packages: ([.[][] | {package: {ecosystem: "Maven", name: "\(.groupId):\(.artifactId)", version}}] | unique)}]}' \
+            > "$RUNNER_TEMP/osv-scanner.json"
+          # The generated file sits outside the tree: a root osv-scanner.toml goes by flag.
+          config=
+          if [ -f osv-scanner.toml ]; then config=--config=osv-scanner.toml; fi
+          go run github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.6.0 scan source ${config:+"$config"} --lockfile "osv-scanner:$RUNNER_TEMP/osv-scanner.json"
 
   unit:
     runs-on: ubuntu-latest
