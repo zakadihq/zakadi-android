@@ -1,11 +1,19 @@
 # Zakadi repository standard: git hooks (lefthook 2.x), Kotlin with Gradle (Android).
 # These are the commands .github/workflows/ci.yml runs; a change here is a change there.
 # Install: brew install lefthook, then lefthook install. The integration job needs an
-# emulator, so it runs in CI only.
+# emulator, and the scan step of the lint job depends on the advisory databases of the
+# day, so both run in CI only.
 
 pre-commit:
   jobs:
     - name: ascii
+      # gradle wrapper writes these scripts (gradlew has non-ASCII characters in its
+      # comments) and rewrites them on every upgrade; they are never edited by hand.
+      exclude:
+        - "gradlew"
+        - "gradlew.bat"
+        - "**/gradlew"
+        - "**/gradlew.bat"
       run: '! LC_ALL=C grep -nHI "[^[:print:][:space:]]" {staged_files}'
     - name: secrets
       glob: "{.env*,**/.env*}"
