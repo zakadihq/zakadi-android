@@ -1,12 +1,22 @@
+# Versions of spec/07-native-mobile-sdk.md 7.17; Dependabot moves them.
 [versions]
-commons-math3 = "3.6.1"
-guava = "33.5.0-jre"
-junit-jupiter-engine = "6.0.1"
+agp = "9.4.1"
+androidx-test-runner = "1.7.0"
+junit = "4.13.2"
+kotlin = "2.4.20"
+kotlinx-serialization = "1.11.0"
+ktfmt = "0.64"
+spotless = "8.10.2"
 
 [libraries]
-commons-math3 = { module = "org.apache.commons:commons-math3", version.ref = "commons-math3" }
-guava = { module = "com.google.guava:guava", version.ref = "guava" }
-junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter-engine" }
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test-runner" }
+junit = { module = "junit:junit", version.ref = "junit" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+# The formatter Spotless runs; declared here so that Dependabot updates it.
+ktfmt = { module = "com.facebook:ktfmt", version.ref = "ktfmt" }
 
 [plugins]
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version = "2.4.0" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+android-lint = { id = "com.android.lint", version.ref = "agp" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
