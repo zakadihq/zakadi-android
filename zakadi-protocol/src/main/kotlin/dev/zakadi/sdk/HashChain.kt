@@ -17,7 +17,10 @@ import kotlinx.serialization.json.jsonPrimitive
 class HashChain(sessionId: String, jti: ByteArray) {
     private val md = MessageDigest.getInstance("SHA-256")
     private var h =
-        md.digest(sessionId.toByteArray(Charsets.UTF_8) + jti.also { require(it.size == 16) })
+        md.digest(
+            sessionId.toByteArray(Charsets.UTF_8) +
+                jti.also { require(it.size == 16) { "jti is ${it.size} bytes, not 16" } }
+        )
 
     /**
      * Chains one media message in send order and returns true; a probe (type 2) leaves the chain
