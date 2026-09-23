@@ -68,7 +68,10 @@ abstract class ProtocolVectors : DefaultTask() {
     fun fetch() {
         val tarball = archive.get().asFile
         if (!tarball.isFile || sha256Of(tarball) != sha256.get()) {
-            URI(url.get()).toURL().openStream().use { input ->
+            val connection = URI(url.get()).toURL().openConnection()
+            connection.connectTimeout = 30_000
+            connection.readTimeout = 60_000
+            connection.getInputStream().use { input ->
                 tarball.outputStream().use { input.copyTo(it) }
             }
         }
