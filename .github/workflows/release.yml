@@ -26,14 +26,16 @@ jobs:
       - name: Test
         run: ./gradlew --no-daemon test
       - name: Build the AAR and the jar
-        run: ./gradlew --no-daemon :zakadi-core:assembleRelease :zakadi-protocol:jar
+        run: |
+          ./gradlew --no-daemon :zakadi-core:assembleRelease :zakadi-protocol:jar
+          mkdir dist
+          cp zakadi-core/build/outputs/aar/zakadi-core-release.aar dist/
+          find zakadi-protocol/build/libs -name 'zakadi-protocol*.jar' ! -name '*-test-fixtures.jar' -exec cp {} dist/ \;
+          test "$(find dist -type f | wc -l)" -eq 2
       - uses: actions/upload-artifact@v7
         with:
           name: sdk
-          path: |
-            zakadi-core/build/outputs/aar/zakadi-core-release.aar
-            zakadi-protocol/build/libs/zakadi-protocol*.jar
-            !zakadi-protocol/build/libs/*-test-fixtures.jar
+          path: dist/
           if-no-files-found: error
 
   github-release:
