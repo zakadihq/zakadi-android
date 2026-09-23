@@ -6,6 +6,7 @@ plugins {
     `java-library`
     `java-test-fixtures`
     alias(libs.plugins.android.lint)
+    alias(libs.plugins.licensee)
 }
 
 dependencies {
@@ -22,6 +23,9 @@ lint {
     // Versions are pinned by spec 07 7.17 and moved by Dependabot, not by a lint warning.
     disable += setOf("GradleDependency", "AndroidGradlePluginVersion", "NewerVersionAvailable")
 }
+
+// The licence check of the scan step in ci.yml: the build fails on a licence not allowed here.
+licensee { allow("Apache-2.0") }
 
 // The conformance vectors of zakadi-protocol v0.1.0 (spec 00 0.11, spec 01 1.12), taken only
 // from the tag archive and only when its SHA-256 is the recorded one.

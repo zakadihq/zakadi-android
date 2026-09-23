@@ -1,4 +1,7 @@
-plugins { alias(libs.plugins.android.library) }
+plugins {
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.licensee)
+}
 
 android {
     namespace = "dev.zakadi.sdk"
@@ -21,6 +24,9 @@ android {
         disable += setOf("GradleDependency", "AndroidGradlePluginVersion", "NewerVersionAvailable")
     }
 }
+
+// The licence check of the scan step in ci.yml: the build fails on a licence not allowed here.
+licensee { allow("Apache-2.0") }
 
 val protocolVectors = configurations.dependencyScope("protocolVectors")
 val protocolVectorFiles =
