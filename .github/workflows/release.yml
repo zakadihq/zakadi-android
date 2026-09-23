@@ -1,0 +1,64 @@
+# Zakadi repository standard: release.yml for the Android SDK before the Maven Central
+# account exists (references/GITHUB.md of zakadi-repo-standards). The tag re-runs the unit
+# tests, builds the :zakadi-core AAR and the :zakadi-protocol jar once and attaches them to
+# a draft GitHub release with the changelog sections of the version. Nothing is published
+# to a registry.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Test
+        run: ./gradlew --no-daemon test
+      - name: Build the AAR and the jar
+        run: ./gradlew --no-daemon :zakadi-core:assembleRelease :zakadi-protocol:jar
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sdk
+          path: |
+            zakadi-core/build/outputs/aar/zakadi-core-release.aar
+            zakadi-protocol/build/libs/zakadi-protocol*.jar
+            !zakadi-protocol/build/libs/*-test-fixtures.jar
+          if-no-files-found: error
+
+  github-release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: sdk
+          path: dist/
+      - name: Release notes from the changelog sections of this version
+        run: |
+          for module in zakadi-protocol zakadi-core; do
+            awk -v v="${GITHUB_REF_NAME#v}" '$0 ~ "^## \\[" v "\\]" {p=1; next} /^## \[/ {p=0} p' "$module/CHANGELOG.md" > section.md
+            if [ -s section.md ]; then
+              printf '## %s\n' "$module" >> notes.md
+              cat section.md >> notes.md
+            fi
+          done
+          test -s notes.md
+      - uses: softprops/action-gh-release@v3
+        with:
+          body_path: notes.md
+          draft: true
+          files: dist/*
