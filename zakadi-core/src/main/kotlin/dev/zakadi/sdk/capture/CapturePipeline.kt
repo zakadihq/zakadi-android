@@ -425,6 +425,10 @@ class CapturePipeline(
                 fallBack("EGL: $e")
             }
 
+            override fun onFrameFailure(timestampNanos: Long, e: RuntimeException) {
+                fail(CaptureError.Kind.CAPTURE, "frame $timestampNanos: $e")
+            }
+
             override fun onInputImageUnavailable(encoder: AvcEncoder) {
                 if (rawColorFormat != null || encoder !== attached) return
                 val formats = encoderInfo.getCapabilitiesForType(MediaFormat.MIMETYPE_VIDEO_AVC)
@@ -678,16 +682,11 @@ class CapturePipeline(
         val range = exposure.exposureCompensationRange.let { it.lower..it.upper }
         val index =
             exposureCompensationIndex(EXPOSURE_COMPENSATION_EV, step, range.first, range.last)
-        val future = camera.cameraControl.setExposureCompensationIndex(index)
-        future.addListener(
-            {
-                val applied =
-                    try {
-                        future.get()
-                        true
-                    } catch (_: Exception) {
-                        false
-                    }
+        // CameraX completes the future once auto-exposure converges on the new index, which some
+        // cameras never report: the event goes once, at that point or after a timeout.
+        val reported = AtomicBoolean(false)
+        val report = { applied: Boolean ->
+            if (reported.compareAndSet(false, true)) {
                 listener.onExposure(
                     ExposureEvent(
                         clock(),
@@ -703,9 +702,28 @@ class CapturePipeline(
                         applied = applied,
                     )
                 )
+            }
+        }
+        val future = camera.cameraControl.setExposureCompensationIndex(index)
+        future.addListener(
+            {
+                report(
+                    try {
+                        future.get()
+                        true
+                    } catch (_: Exception) {
+                        false
+                    }
+                )
             },
             mainExecutor,
         )
+        main.postDelayed({ report(false) }, EXPOSURE_CONFIRM_MS)
+    }
+
+    private companion object {
+        /** How long the exposure event waits for the camera to confirm the index. */
+        const val EXPOSURE_CONFIRM_MS = 3000L
     }
 
     private fun fail(kind: CaptureError.Kind, message: String) {
