@@ -94,6 +94,8 @@ jobs:
         with:
           api-level: 26
           arch: x86_64
+          # The action's default options plus an emulated front camera for the camera tests.
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-front emulated
           script: ./gradlew --no-daemon connectedAndroidTest
       - name: Instrumented test counts
         if: always()
