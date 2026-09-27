@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The camera tests of :zakadi-core run in a screen-on activity of the test APK, which holds
+     the camera permission (the tests grant it at run time). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <application>
+        <activity
+            android:name="dev.zakadi.sdk.capture.CameraTestActivity"
+            android:exported="false" />
+    </application>
+
+</manifest>
