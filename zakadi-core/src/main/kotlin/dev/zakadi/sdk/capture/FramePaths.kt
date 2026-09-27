@@ -35,6 +35,9 @@ internal interface FrameSink {
     /** Path A: EGL or GL failed; the pipeline moves to path B. */
     fun onEglFailure(e: Exception)
 
+    /** Path B: handling the frame at [timestampNanos] threw [e]. */
+    fun onFrameFailure(timestampNanos: Long, e: RuntimeException)
+
     /** Path B: [encoder] offers no input image; the pipeline re-creates it with a raw format. */
     fun onInputImageUnavailable(encoder: AvcEncoder)
 }
@@ -234,6 +237,8 @@ internal class ImageFramePath(private val sink: FrameSink) : ImageAnalysis.Analy
     override fun analyze(image: ImageProxy) {
         try {
             handle(image)
+        } catch (e: RuntimeException) {
+            sink.onFrameFailure(image.imageInfo.timestamp, e)
         } finally {
             image.close()
         }
@@ -257,6 +262,16 @@ internal class ImageFramePath(private val sink: FrameSink) : ImageAnalysis.Analy
             sink.onDropped(ts, DropReason.ENCODER_BUSY)
             return
         }
+        try {
+            submit(image, ts, target, index)
+        } catch (e: RuntimeException) {
+            target.returnInput(index)
+            sink.onDropped(ts, DropReason.SUBMIT_FAILED)
+            sink.onFrameFailure(ts, e)
+        }
+    }
+
+    private fun submit(image: ImageProxy, ts: Long, target: AvcEncoder, index: Int) {
         val w = target.spec.width
         val h = target.spec.height
         val source = image.planes.map { YuvPlane(it.buffer, it.rowStride, it.pixelStride) }

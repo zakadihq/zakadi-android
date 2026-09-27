@@ -153,7 +153,10 @@ data class ExposureEvent(
     val range: IntRange? = null,
     /** `index * step`: the EV applied, for `camera_meta`. */
     val ev: Double? = null,
-    /** Whether the camera accepted the index. */
+    /**
+     * Whether the camera confirmed the index within 3 s: a capture result carried it with
+     * auto-exposure settled. False when it did not, or when it refused it.
+     */
     val applied: Boolean = false,
 )
 

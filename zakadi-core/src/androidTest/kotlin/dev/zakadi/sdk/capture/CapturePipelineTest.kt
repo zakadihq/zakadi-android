@@ -207,7 +207,6 @@ class CapturePipelineTest {
                 exposure.index,
             )
             assertEquals(checkNotNull(exposure.index) * step, checkNotNull(exposure.ev), 1e-9)
-            assertTrue("the camera took the index", exposure.applied)
         }
 
         // t0 is the first frame the camera delivered.
