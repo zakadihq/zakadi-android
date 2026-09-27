@@ -12,6 +12,10 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // The encoder probe of phase 0 (spec 09 9.11 item 6): its writer, schedule and summaries are
+    // test fixtures, which reach the unit and instrumented tests and never the AAR (spec 07 7.15).
+    testFixtures { enable = true }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
