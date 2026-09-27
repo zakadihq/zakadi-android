@@ -18,8 +18,8 @@ import org.junit.runners.model.FrameworkMethod
 /**
  * The encoder probe of phase 0 measurement 6 (spec 09 section 9.11 item 6, D105), as the field team
  * runs it: schedule 1 on the front camera in the camera test activity, one log per invocation,
- * whose path goes to the instrumentation output. It runs only when asked, and is reported skipped
- * (ignored) otherwise:
+ * whose path goes to the instrumentation output. It runs only when asked; otherwise it holds no
+ * test, and the other instrumented tests run as before:
  * ```
  * adb shell am instrument -w -e zakadi.probe run \
  *     -e class dev.zakadi.sdk.probe.EncoderProbeRun \
@@ -33,14 +33,14 @@ import org.junit.runners.model.FrameworkMethod
 @RunWith(EncoderProbeRun.WhenAsked::class)
 class EncoderProbeRun {
     /**
-     * Runs the probe only when the instrumentation was given `-e zakadi.probe`, and reports it
-     * skipped otherwise: an ignored test, where an assumption would count as a failure in the
-     * connected test report.
+     * Gives the probe's test only when the instrumentation was given `-e zakadi.probe`, and none
+     * otherwise: the connected test report counts a test skipped by an assumption, or ignored, as a
+     * failure.
      */
     class WhenAsked(test: Class<*>) : BlockJUnit4ClassRunner(test) {
-        override fun isIgnored(child: FrameworkMethod): Boolean =
-            super.isIgnored(child) ||
-                InstrumentationRegistry.getArguments().getString(PROBE) == null
+        override fun getChildren(): List<FrameworkMethod> =
+            if (InstrumentationRegistry.getArguments().getString(PROBE) == null) emptyList()
+            else super.getChildren()
     }
 
     @Test
