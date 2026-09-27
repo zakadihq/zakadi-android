@@ -10,13 +10,16 @@ import dev.zakadi.sdk.capture.CapturePath
 import dev.zakadi.sdk.capture.EncoderPreference
 import dev.zakadi.sdk.capture.startCameraActivity
 import kotlinx.serialization.json.jsonPrimitive
-import org.junit.Assume.assumeTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.BlockJUnit4ClassRunner
+import org.junit.runners.model.FrameworkMethod
 
 /**
  * The encoder probe of phase 0 measurement 6 (spec 09 section 9.11 item 6, D105), as the field team
  * runs it: schedule 1 on the front camera in the camera test activity, one log per invocation,
- * whose path goes to the instrumentation output. It runs only when asked, and is skipped otherwise:
+ * whose path goes to the instrumentation output. It runs only when asked, and is reported skipped
+ * (ignored) otherwise:
  * ```
  * adb shell am instrument -w -e zakadi.probe run \
  *     -e class dev.zakadi.sdk.probe.EncoderProbeRun \
@@ -27,12 +30,23 @@ import org.junit.Test
  * zakadi.probe.path B` capture path B of 7.18. The log lands in `files/zakadi-probe/` of the test
  * app's external storage.
  */
+@RunWith(EncoderProbeRun.WhenAsked::class)
 class EncoderProbeRun {
+    /**
+     * Runs the probe only when the instrumentation was given `-e zakadi.probe`, and reports it
+     * skipped otherwise: an ignored test, where an assumption would count as a failure in the
+     * connected test report.
+     */
+    class WhenAsked(test: Class<*>) : BlockJUnit4ClassRunner(test) {
+        override fun isIgnored(child: FrameworkMethod): Boolean =
+            super.isIgnored(child) ||
+                InstrumentationRegistry.getArguments().getString(PROBE) == null
+    }
+
     @Test
     fun runScheduleOne() {
         val arguments = InstrumentationRegistry.getArguments()
         val probe = arguments.getString(PROBE)
-        assumeTrue("the encoder probe runs with -e $PROBE run", probe != null)
         if (probe != "run") throw AssertionError("-e $PROBE takes run, not $probe")
         val encoders =
             mapOf(
