@@ -100,3 +100,10 @@ jobs:
       - name: Instrumented test counts
         if: always()
         run: find zakadi-core/build/outputs/androidTest-results -name '*.xml' -print0 | xargs -0 grep -h '<testsuite '
+      # The test APK carries the encoder probe of phase 0 (spec 09 9.11 item 6, D105): the field
+      # team installs it from this artifact of a run on main (README.md).
+      - uses: actions/upload-artifact@v7
+        with:
+          name: encoder-probe
+          path: zakadi-core/build/outputs/apk/androidTest/debug/zakadi-core-debug-androidTest.apk
+          if-no-files-found: error
