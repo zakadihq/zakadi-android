@@ -17,5 +17,8 @@ All notable changes to this module are documented here. The format follows
   reports every frame, output buffer, request and format.
 - Dependencies on CameraX 1.6.2: `camera-core`, `camera-camera2`, `camera-lifecycle` and
   `camera-video`.
+- The encoder probe of phase 0 measurement 6 (spec 09 9.11 item 6, D105), in the test fixtures and
+  the instrumented test APK and never in the AAR: `EncoderProbeRun` runs schedule 1 through the
+  capture pipeline on the front camera and writes log format 1 for the ML stream.
 
 [Unreleased]: https://github.com/zakadihq/zakadi-android/commits/main
