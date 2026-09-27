@@ -26,7 +26,11 @@ android {
 }
 
 // The licence check of the scan step in ci.yml: the build fails on a licence not allowed here.
-licensee { allow("Apache-2.0") }
+licensee {
+    allow("Apache-2.0")
+    // org.checkerframework:checker-qual, which CameraX brings through Guava.
+    allow("MIT")
+}
 
 val protocolVectors = configurations.dependencyScope("protocolVectors")
 val protocolVectorFiles =
@@ -37,6 +41,12 @@ val protocolVectorFiles =
 
 dependencies {
     api(project(":zakadi-protocol"))
+    // CaptureConfig takes camera-core types: a PreviewView's surface provider and metering points.
+    api(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.video)
+    testImplementation(libs.junit)
     androidTestImplementation(testFixtures(project(":zakadi-protocol")))
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.runner)
