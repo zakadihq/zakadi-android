@@ -8,7 +8,7 @@ kotlin = "2.4.20"
 kotlinx-serialization = "1.11.0"
 ktfmt = "0.64"
 licensee = "1.14.1"
-spotless = "8.10.2"
+spotless = "8.10.3"
 
 [libraries]
 # CameraX of spec 07 7.17 (Apache-2.0; camera-core also bundles libyuv, BSD-3-Clause).
